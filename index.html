@@ -1,0 +1,101 @@
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>CRM для раскроя ДСП — Самообслуживание клиентов</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <header>
+    <h1>Онлайн-оформление заказа на раскрой ДСП</h1>
+    <p class="subtitle">Введите параметры листа и деталей. Система рассчитает раскрой и сформирует Excel-файл заказа для программы "Гиглаб".</p>
+  </header>
+
+  <main>
+    <form id="sheet-form">
+      <fieldset>
+        <legend>ДСП — базовые параметры</legend>
+        <label>
+          Размер листа:
+          <select id="sheet-size-select">
+            <option value="2800x2070">Стандарт (2800 × 2070 мм)</option>
+            <option value="custom">Другое (свой размер)</option>
+          </select>
+        </label>
+        <div id="custom-sheet-size" style="display: none;">
+          <label>Ширина (мм): <input type="number" id="sheet-width" min="1000" max="5000" value="2800"> </label>
+          <label>Высота (мм): <input type="number" id="sheet-height" min="1000" max="3000" value="2070"> </label>
+        </div>
+        <label>
+          Материал:
+          <select id="sheet-material">
+            <option value="ДСП">ДСП</option>
+            <option value="МДФ">МДФ</option>
+            <option value="Фанера">Фанера</option>
+            <option value="ХДФ">ХДФ</option>
+            <option value="custom">Другое</option>
+          </select>
+        </label>
+        <span id="default-thickness-label">(Толщина: <span id="sheet-thickness-value">16</span> мм)</span>
+        <label id="custom-thickness-label" style="display:none;">
+          Толщина (мм):
+          <input type="number" id="sheet-thickness" min="1" max="40" step="0.1" value="16">
+        </label>
+      </fieldset>
+    </form>
+
+    <section id="parts-section">
+      <h2>Детали для раскроя</h2>
+      <div class="hint">Минимальный размер детали — 5 мм. Вводите все размеры в миллиметрах, количество — в штуках.</div>
+      <table id="parts-table">
+        <thead>
+          <tr>
+            <th>№</th>
+            <th>Ширина (мм)</th>
+            <th>Высота (мм)</th>
+            <th>Кол-во</th>
+            <th>Кромка</th>
+            <th>Материал</th>
+            <th>Толщина (мм)</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="parts-tbody">
+        </tbody>
+      </table>
+      <button id="add-part-btn" type="button">Добавить деталь</button>
+    </section>
+
+    <section id="summary-section">
+      <h2>Расчет и визуализация</h2>
+      <div class="flex-columns">
+        <div class="summary-data">
+          <p>Занятая площадь: <span id="used-area">0</span> м²</p>
+          <p>Остаток/отходы: <span id="waste-percent">0</span>%</p>
+        </div>
+        <div class="sheet-preview-container">
+          <canvas id="sheet-preview" width="320" height="236" aria-label="Схематичный предпросмотр раскроя"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <section id="export-section">
+      <button id="export-excel-btn" type="button">Скачать заказ (Excel)</button>
+      <div id="export-output"></div>
+    </section>
+  </main>
+
+  <footer>
+    <small>CRM для раскроя ДСП &copy; 2024. Внимание: все размеры указываются в миллиметрах. Введите реальные параметры для корректного заказа.</small>
+  </footer>
+  <script type="importmap">
+    {
+      "imports": {
+        "pako": "https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js",
+        "xlsx": "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/+esm"
+      }
+    }
+  </script>
+  <script type="module" src="./main.js"></script>
+</body>
+</html>
