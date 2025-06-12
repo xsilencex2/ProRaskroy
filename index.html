@@ -8,36 +8,61 @@
 <body>
   <header>
     <h1>Онлайн-оформление заказа на раскрой ДСП</h1>
-    <p class="subtitle">Введите параметры листа и деталей. Система рассчитает раскрой и сформирует Excel-файл заказа для программы "Гиглаб".</p>
+    <p class="subtitle">Введите параметры листа и деталей. Система рассчитает раскрой и сформирует Excel-файл заказа для печати.</p>
   </header>
 
   <main>
+    <form id="user-form">
+      <fieldset>
+        <legend>Ваши контактные данные</legend>
+        <label>
+          Имя:
+          <input type="text" id="user-firstname" name="firstname" required maxlength="32" autocomplete="given-name">
+        </label>
+        <label>
+          Фамилия:
+          <input type="text" id="user-lastname" name="lastname" required maxlength="32" autocomplete="family-name">
+        </label>
+        <label>
+          Телефон:
+          <input type="tel" id="user-phone" name="phone" required pattern=".{6,}" maxlength="20" autocomplete="tel">
+        </label>
+      </fieldset>
+    </form>
+
     <form id="sheet-form">
       <fieldset>
-        <legend>ДСП — базовые параметры</legend>
+        <legend>Параметры листа</legend>
         <label>
           Размер листа:
           <select id="sheet-size-select">
             <option value="2800x2070">Стандарт (2800 × 2070 мм)</option>
+            <option value="2500x1830">2500 × 1830 мм</option>
             <option value="custom">Другое (свой размер)</option>
           </select>
         </label>
         <div id="custom-sheet-size" style="display: none;">
-          <label>Ширина (мм): <input type="number" id="sheet-width" min="1000" max="5000" value="2800"> </label>
-          <label>Высота (мм): <input type="number" id="sheet-height" min="1000" max="3000" value="2070"> </label>
+          <label>Ширина (мм): <input type="number" id="sheet-width" min="1000" max="5000" value="2800"></label>
+          <label>Высота (мм): <input type="number" id="sheet-height" min="1000" max="3000" value="2070"></label>
         </div>
         <label>
-          Материал:
-          <select id="sheet-material">
-            <option value="ДСП">ДСП</option>
-            <option value="МДФ">МДФ</option>
-            <option value="Фанера">Фанера</option>
-            <option value="ХДФ">ХДФ</option>
-            <option value="custom">Другое</option>
+          Название материала:
+          <input type="text" id="sheet-material" required maxlength="64">
+        </label>
+        <label style="margin-left:1em;">
+          Кромка:
+          <input type="text" id="sheet-edge" maxlength="32" placeholder="например, ПВХ">
+        </label>
+        <label style="margin-left:1em;">
+          Толщина кромки:
+          <select id="edge-thickness">
+            <option value="1 мм">1 мм</option>
+            <option value="0.8 мм">0.8 мм</option>
+            <option value="0.4 мм">0.4 мм</option>
           </select>
         </label>
-        <span id="default-thickness-label">(Толщина: <span id="sheet-thickness-value">16</span> мм)</span>
-        <label id="custom-thickness-label" style="display:none;">
+        <span id="default-thickness-label" style="display:none;">(Толщина: <span id="sheet-thickness-value"></span> мм)</span>
+        <label id="custom-thickness-label">
           Толщина (мм):
           <input type="number" id="sheet-thickness" min="1" max="40" step="0.1" value="16">
         </label>
@@ -51,12 +76,14 @@
         <thead>
           <tr>
             <th>№</th>
+            <th>Длина (мм)</th>
             <th>Ширина (мм)</th>
-            <th>Высота (мм)</th>
             <th>Кол-во</th>
-            <th>Кромка</th>
-            <th>Материал</th>
-            <th>Толщина (мм)</th>
+            <th>TXT (текстура)</th>
+            <th>Вверх</th>
+            <th>Вниз</th>
+            <th>Лево</th>
+            <th>Право</th>
             <th></th>
           </tr>
         </thead>
@@ -67,15 +94,10 @@
     </section>
 
     <section id="summary-section">
-      <h2>Расчет и визуализация</h2>
-      <div class="flex-columns">
-        <div class="summary-data">
-          <p>Занятая площадь: <span id="used-area">0</span> м²</p>
-          <p>Остаток/отходы: <span id="waste-percent">0</span>%</p>
-        </div>
-        <div class="sheet-preview-container">
-          <canvas id="sheet-preview" width="320" height="236" aria-label="Схематичный предпросмотр раскроя"></canvas>
-        </div>
+      <h2>Расчёт площади и отходов</h2>
+      <div class="summary-data">
+        <p>Занятая площадь: <span id="used-area">0</span> м²</p>
+        <p>Остаток/отходы: <span id="waste-percent">0</span>%</p>
       </div>
     </section>
 
@@ -86,12 +108,11 @@
   </main>
 
   <footer>
-    <small>CRM для раскроя ДСП &copy; 2024. Внимание: все размеры указываются в миллиметрах. Введите реальные параметры для корректного заказа.</small>
+    <small>CRM для раскроя ДСП &copy; 2024. Все размеры в миллиметрах. Введите реальные параметры для корректного заказа.</small>
   </footer>
   <script type="importmap">
     {
       "imports": {
-        "pako": "https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js",
         "xlsx": "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/+esm"
       }
     }
