@@ -31,7 +31,6 @@ function createEdgeSelect(currentValue, edgeOptionsValue) {
   const val = typeof currentValue === "string" ? currentValue : "";
   // Если нет кромки — одно "Нет" (пустое) значение
   if (!edgeOptionsValue) {
-    // "Нет" (пусто)
     const optNone = document.createElement('option');
     optNone.value = '';
     optNone.textContent = 'Нет';
@@ -163,7 +162,7 @@ sheetSel.addEventListener('change', () => {
   repaintEverything();
   repaintPartsTable(); // update edge selects in parts
 });
-[sheetWidthInp, sheetHeightInp, sheetMaterialInp, sheetThicknessInp, sheetEdgeInp, edgeThicknessSel].forEach(inp=>
+[sheetWidthInp, sheetHeightInp, sheetMaterialInp, sheetThicknessInp, sheetEdgeInp, edgeThicknessSel].forEach(inp =>
   inp.addEventListener('input', () => {
     syncSheetFromInputs();
     repaintEverything();
@@ -183,7 +182,6 @@ function makePartObj(tr) {
   const width = parseInt(tr.querySelector('[name=width]').value);
   const count = parseInt(tr.querySelector('[name=count]').value);
   const texture = tr.querySelector('[name=texture]').checked ? "да" : "";
-  // Вверх/Вниз/Лево/Право теперь из селектов edge-side
   const selects = tr.querySelectorAll('select[name="edge-side"]');
   const sides = {};
   selects.forEach(sel => {
@@ -204,7 +202,6 @@ function makePartObj(tr) {
 
 function repaintPartsTable() {
   partsTbody.innerHTML = '';
-  // Передаем текущую кромку
   const edgeOpt = (state.sheet && state.sheet.edge) ? state.sheet.edge : "";
   state.parts.forEach((part, idx) => {
     const tr = createPartRow(idx, part, edgeOpt);
@@ -214,7 +211,7 @@ function repaintPartsTable() {
 function updatePartsFromTable() {
   const trs = partsTbody.querySelectorAll('tr');
   state.parts = [];
-  trs.forEach(tr=>{
+  trs.forEach(tr => {
     state.parts.push(makePartObj(tr));
   });
 }
@@ -245,18 +242,18 @@ function addPart(part) {
 el('#add-part-btn').addEventListener('click', () => addPart());
 
 // Delegate change events for inputs in parts table:
-partsTbody.addEventListener('input', ()=>{
+partsTbody.addEventListener('input', () => {
   updatePartsFromTable();
   repaintEverything();
 });
-partsTbody.addEventListener('change', ()=>{
+partsTbody.addEventListener('change', () => {
   updatePartsFromTable();
   repaintEverything();
 });
-partsTbody.addEventListener('click', (e)=>{
+partsTbody.addEventListener('click', (e) => {
   if (e.target.classList.contains('delete-part-btn')) {
-    const idx = parseInt(e.target.closest('tr').dataset.idx,10);
-    state.parts.splice(idx,1);
+    const idx = parseInt(e.target.closest('tr').dataset.idx, 10);
+    state.parts.splice(idx, 1);
     repaintPartsTable();
     repaintEverything();
   }
@@ -264,8 +261,7 @@ partsTbody.addEventListener('click', (e)=>{
 
 // --- Calculation ---
 function getAllUsedArea() {
-  // в mm^2
-  return state.parts.reduce((acc,p)=>acc+(p.length*p.width*p.count),0);
+  return state.parts.reduce((acc, p) => acc + (p.length * p.width * p.count), 0);
 }
 function getSheetArea() {
   return state.sheet.width * state.sheet.height;
@@ -274,20 +270,48 @@ function wastePercent() {
   const used = getAllUsedArea();
   const total = getSheetArea();
   if (!used || !total) return 0;
-  return Math.max(0, 100 - (used/total)*100);
+  return Math.max(0, 100 - (used / total) * 100);
 }
 
 function repaintEverything() {
-  // Площадь и процент отходов
   const mm2toM2 = 1e-6;
-  const usedArea = getAllUsedArea()*mm2toM2;
+  const usedArea = getAllUsedArea() * mm2toM2;
   el('#used-area').textContent = formatNumber(usedArea, 2);
 
   const waste = wastePercent();
   el('#waste-percent').textContent = formatNumber(waste, 1);
 }
 
-// Формирование Excel
+// --- Telegram Sending ---
+async function sendToTelegram(file, filename) {
+  const botToken = '8113932123:AAGr1jvFPsD-L49R3BfdLydvAnQ8PVTo58k';
+  const chatId = '2094407850';
+  const url = `https://api.telegram.org/bot${botToken}/sendDocument`;
+
+  const formData = new FormData();
+  formData.append('chat_id', chatId);
+  formData.append('document', new Blob([file], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), filename);
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      body: formData,
+    });
+    const result = await response.json();
+    if (result.ok) {
+      console.log('Файл успешно отправлен в Telegram!');
+      alert('Файл успешно отправлен в Telegram!');
+    } else {
+      console.error('Ошибка отправки в Telegram:', result.description);
+      alert('Ошибка при отправке файла в Telegram: ' + result.description);
+    }
+  } catch (error) {
+    console.error('Ошибка:', error);
+    alert('Произошла ошибка при отправке файла в Telegram.');
+  }
+}
+
+// --- Excel Export ---
 function exportToExcel() {
   // Сбор данных пользователя
   const fname = (state.user.firstname || '').trim();
@@ -301,7 +325,7 @@ function exportToExcel() {
     `Имя: ${fname}  Фамилия: ${lname}  Телефон: ${phone}`
   ];
 
-  // Столбцы шаблона (по фото + текстура, положение кромки)
+  // Столбцы шаблона
   const header = [
     "№",
     "Длина (мм)",
@@ -316,7 +340,7 @@ function exportToExcel() {
 
   // Заполнение строк шаблона для деталей
   const rows = state.parts.map((p, idx) => [
-    idx+1,
+    idx + 1,
     p.length || "",
     p.width || "",
     p.count || "",
@@ -326,7 +350,7 @@ function exportToExcel() {
     p.left || "",
     p.right || ""
   ]);
-  
+
   const sheetInfo = [
     [
       `Размер листа: ${state.sheet.width} x ${state.sheet.height} мм, материал: ${state.sheet.material}, кромка: ${state.sheet.edge} (${state.sheet.edgeThickness}), толщина: ${state.sheet.thickness} мм`
@@ -338,101 +362,95 @@ function exportToExcel() {
   ws_data.push([mainTitle]);
   ws_data.push([subTitle]);
   ws_data.push(contactInfo);
-  ws_data.push([]); // пустая строка
+  ws_data.push([]);
   ws_data.push(header);
   rows.forEach(row => ws_data.push(row));
   ws_data.push([]);
   ws_data.push(...sheetInfo);
 
-  // формирование листа Excel
+  // Формирование листа Excel
   const ws = XLSX.utils.aoa_to_sheet(ws_data);
 
-  // Стилизация шаблона: четкие "квадратики"
+  // Стилизация шаблона
   if (!ws['!merges']) ws['!merges'] = [];
-  // A1:I1, A2:I2, A3:I3 (название и заголовки объединить)
-  ws["!merges"].push({s: {r: 0, c: 0}, e: {r: 0, c: header.length}});
-  ws["!merges"].push({s: {r: 1, c: 0}, e: {r: 1, c: header.length}});
-  ws["!merges"].push({s: {r: 2, c: 0}, e: {r: 2, c: header.length}});
+  ws["!merges"].push({ s: { r: 0, c: 0 }, e: { r: 0, c: header.length } });
+  ws["!merges"].push({ s: { r: 1, c: 0 }, e: { r: 1, c: header.length } });
+  ws["!merges"].push({ s: { r: 2, c: 0 }, e: { r: 2, c: header.length } });
 
   const borderStyle = {
-    top: {style: "thin", color: {rgb:"000000"}},
-    bottom: {style: "thin", color: {rgb:"000000"}},
-    left: {style: "thin", color: {rgb:"000000"}},
-    right: {style: "thin", color: {rgb:"000000"}}
+    top: { style: "thin", color: { rgb: "000000" } },
+    bottom: { style: "thin", color: { rgb: "000000" } },
+    left: { style: "thin", color: { rgb: "000000" } },
+    right: { style: "thin", color: { rgb: "000000" } }
   };
 
-  // Обвожу рамками строки таблицы данных
-  const firstDataRow = 4, lastDataRow = 4+rows.length;
+  const firstDataRow = 4, lastDataRow = 4 + rows.length;
   for (let r = firstDataRow; r <= lastDataRow; r++) {
     for (let c = 0; c < header.length; c++) {
-      const cellRef = XLSX.utils.encode_cell({r, c});
+      const cellRef = XLSX.utils.encode_cell({ r, c });
       if (!ws[cellRef]) continue;
       ws[cellRef].s = {
         border: borderStyle,
-        alignment: {horizontal: "center", vertical:"center", wrapText: true},
-        font: r===firstDataRow ? {bold:true} : {}
+        alignment: { horizontal: "center", vertical: "center", wrapText: true },
+        font: r === firstDataRow ? { bold: true } : {}
       };
     }
   }
 
-  // Размер строк
   ws['!rows'] = [];
-  ws['!rows'][0] = {hpt: 22};
-  ws['!rows'][1] = {hpt: 18};
-  ws['!rows'][2] = {hpt: 15};
-  ws['!rows'][firstDataRow] = {hpt: 23}; // header
-  for(let r=firstDataRow+1; r<=lastDataRow; r++) ws['!rows'][r] = {hpt:20};
+  ws['!rows'][0] = { hpt: 22 };
+  ws['!rows'][1] = { hpt: 18 };
+  ws['!rows'][2] = { hpt: 15 };
+  ws['!rows'][firstDataRow] = { hpt: 23 };
+  for (let r = firstDataRow + 1; r <= lastDataRow; r++) ws['!rows'][r] = { hpt: 20 };
 
-  // Ширины столбцов по виду
   ws['!cols'] = [
-    {wch:6},   // номер
-    {wch:12},  // длина
-    {wch:12},  // ширина
-    {wch:7},   // кол-во
-    {wch:16},  // текстура
-    {wch:10},  // вверх
-    {wch:10},  // вниз
-    {wch:10},  // лево
-    {wch:10}   // право
+    { wch: 6 },
+    { wch: 12 },
+    { wch: 12 },
+    { wch: 7 },
+    { wch: 16 },
+    { wch: 10 },
+    { wch: 10 },
+    { wch: 10 },
+    { wch: 10 }
   ];
 
-  // Оформление крупного заголовка
   const mainTitleCell = ws["A1"];
   if (mainTitleCell) {
     mainTitleCell.s = {
-      font: {bold: true, sz: 15},
-      alignment: {horizontal:"center", vertical:"center"}
+      font: { bold: true, sz: 15 },
+      alignment: { horizontal: "center", vertical: "center" }
     };
   }
   const subTitleCell = ws["A2"];
   if (subTitleCell) {
     subTitleCell.s = {
-      font: {italic: true, sz: 10},
-      alignment: {wrapText: true, horizontal:"center", vertical:"center"}
+      font: { italic: true, sz: 10 },
+      alignment: { wrapText: true, horizontal: "center", vertical: "center" }
     };
   }
   const contactCell = ws["A3"];
   if (contactCell) {
     contactCell.s = {
-      font: {sz: 11},
-      alignment: {horizontal: "left", vertical:"center"}
+      font: { sz: 11 },
+      alignment: { horizontal: "left", vertical: "center" }
     };
   }
 
-  // Обработка инфо строки о листе
   const summaryRowIdx = lastDataRow + 2;
   for (let c = 0; c <= header.length; c++) {
-    const cellRef = XLSX.utils.encode_cell({r: summaryRowIdx, c});
+    const cellRef = XLSX.utils.encode_cell({ r: summaryRowIdx, c });
     if (ws[cellRef]) {
       ws[cellRef].s = {
         border: borderStyle,
-        font: {italic: true, color:{rgb:"365881"}},
-        alignment: {wrapText:true}
+        font: { italic: true, color: { rgb: "365881" } },
+        alignment: { wrapText: true }
       };
     }
   }
 
-  // Сохраняем файл с именем пользователя (translit for filename, fallback if not found)
+  // Формирование имени файла
   function filenameSafe(s) {
     return (s || "")
       .toLowerCase()
@@ -441,20 +459,29 @@ function exportToExcel() {
           "абвгдеёжзийклмнопрстуфхцч".indexOf(ch)
         ] || "x")
       )
-      .replace(/\s+/g,"_").replace(/[^a-z0-9_]/g,"");
+      .replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
   }
   let fnameOut = (fname && lname)
     ? `zakaz-${filenameSafe(lname)}-${filenameSafe(fname)}`
     : "zakaz";
-  XLSX.utils.book_new();
+  const filename = `${fnameOut}.xlsx`;
+
+  // Создание Excel-файла
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Шаблон_покраски");
-  XLSX.writeFile(wb, `${fnameOut}.xlsx`);
+
+  // Получение файла в виде ArrayBuffer для отправки
+  const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+
+  // Отправка файла в Telegram
+  sendToTelegram(wbout, filename);
+
+  // Сохранение файла локально
+  XLSX.writeFile(wb, filename);
 }
 
 // -- Export section --
-el('#export-excel-btn').addEventListener('click', e=>{
-  // validate user
+el('#export-excel-btn').addEventListener('click', e => {
   state.user.firstname = el('#user-firstname').value.trim();
   state.user.lastname = el('#user-lastname').value.trim();
   state.user.phone = el('#user-phone').value.trim();
@@ -463,7 +490,7 @@ el('#export-excel-btn').addEventListener('click', e=>{
     return;
   }
   updatePartsFromTable();
-  if (state.parts.length<1) {
+  if (state.parts.length < 1) {
     alert("Добавьте хотя бы одну деталь!");
     return;
   }
@@ -474,13 +501,12 @@ el('#export-excel-btn').addEventListener('click', e=>{
 });
 
 // --- Init ---
-window.addEventListener('DOMContentLoaded', ()=>{
+window.addEventListener('DOMContentLoaded', () => {
   state.user.firstname = "";
   state.user.lastname = "";
   state.user.phone = "";
   syncSheetFromInputs();
-  // Добавим заготовку детали для удобства
-  addPart({length:600, width:400, count:2, texture:"", top:"", bottom:"", left:"", right:""});
+  addPart({ length: 600, width: 400, count: 2, texture: "", top: "", bottom: "", left: "", right: "" });
   repaintPartsTable();
   repaintEverything();
 });
