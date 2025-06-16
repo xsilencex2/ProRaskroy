@@ -37,7 +37,9 @@
           Размер листа:
           <select id="sheet-size-select">
             <option value="2800x2070">Стандарт (2800 × 2070 мм)</option>
+            <option value="2500x2070">2500 × 2070 мм</option>
             <option value="2500x1830">2500 × 1830 мм</option>
+            <option value="2750x1830">2750 × 1830 мм</option>
             <option value="custom">Другое (свой размер)</option>
           </select>
         </label>
@@ -46,8 +48,22 @@
           <label>Высота (мм): <input type="number" id="sheet-height" min="1000" max="3000" value="2070"></label>
         </div>
         <label>
-          Название материала:
-          <input type="text" id="sheet-material" required maxlength="64">
+          Материал:
+          <select id="sheet-material-type">
+            <option value="ДСП">ДСП</option>
+            <option value="МДФ">МДФ</option>
+            <option value="ХДФ">ХДФ</option>
+            <option value="custom">Другое</option>
+          </select>
+        </label>
+        <span id="material-custom-name">
+          <label>Название материала:
+            <input type="text" id="sheet-material" maxlength="64" placeholder="Название материала">
+          </label>
+        </span>
+        <label>
+          <input type="checkbox" id="sheet-texture" style="margin-right:0.5em;">
+          Учет текстуры на материале
         </label>
         <label style="margin-left:1em;">
           Кромка:
@@ -61,8 +77,10 @@
             <option value="0.4 мм">0.4 мм</option>
           </select>
         </label>
-        <span id="default-thickness-label" style="display:none;">(Толщина: <span id="sheet-thickness-value"></span> мм)</span>
-        <label id="custom-thickness-label">
+        <span id="default-thickness-label" style="margin-left:1em;">
+          (Толщина по умолчанию: <span id="sheet-thickness-value">16</span> мм)
+        </span>
+        <label id="custom-thickness-label" style="margin-left:1em;">
           Толщина (мм):
           <input type="number" id="sheet-thickness" min="1" max="40" step="0.1" value="16">
         </label>
